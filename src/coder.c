@@ -6,6 +6,34 @@ static int	coder_needs_compile(t_coder *coder);
 static void	coder_debug(t_coder *coder);
 static void	coder_refactor(t_coder *coder);
 
+static void	wait_for_duration(t_coder *coder, long duration)
+{
+	t_simulation		*simulation;
+	struct timeval	now;
+	struct timespec	deadline;
+	int				wait_status;
+
+	simulation = coder->simulation;
+	gettimeofday(&now, NULL);
+	deadline.tv_sec = now.tv_sec + duration / 1000;
+	deadline.tv_nsec = now.tv_usec * 1000 + (duration % 1000) * 1000000;
+	if (deadline.tv_nsec >= 1000000000)
+	{
+		deadline.tv_sec++;
+		deadline.tv_nsec -= 1000000000;
+	}
+	if (pthread_mutex_lock(&simulation->scheduler_mutex) != 0)
+		return ;
+	while (!is_simulation_finished(simulation))
+	{
+		wait_status = pthread_cond_timedwait(&simulation->scheduler_cond,
+				&simulation->scheduler_mutex, &deadline);
+		if (wait_status != 0)
+			break ;
+	}
+	pthread_mutex_unlock(&simulation->scheduler_mutex);
+}
+
 static int	wait_for_cooldown(t_dongle *dongle, long available_at)
 {
 	struct timeval	now;
@@ -194,7 +222,7 @@ static int	coder_compile(t_coder *coder)
 	if (coder->left_dongle != coder->right_dongle)
 		log_action(coder, "has taken a dongle");
 	log_action(coder, "is compiling");
-	sleep_ms(coder->simulation->config.time_to_compile);
+	wait_for_duration(coder, coder->simulation->config.time_to_compile);
 	pthread_mutex_lock(&coder->simulation->state_mutex);
 	finished = coder->simulation->finished;
 	if (!finished)
@@ -217,13 +245,13 @@ static int	coder_needs_compile(t_coder *coder)
 static void	coder_debug(t_coder *coder)
 {
 	log_action(coder, "is debugging");
-	sleep_ms(coder->simulation->config.time_to_debug);
+	wait_for_duration(coder, coder->simulation->config.time_to_debug);
 }
 
 static void	coder_refactor(t_coder *coder)
 {
 	log_action(coder, "is refactoring");
-	sleep_ms(coder->simulation->config.time_to_refactor);
+	wait_for_duration(coder, coder->simulation->config.time_to_refactor);
 }
 
 int	create_monitor_thread(t_simulation *simulation)

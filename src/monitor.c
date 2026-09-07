@@ -10,7 +10,9 @@ static void	wake_waiting_coders(t_simulation *simulation)
 	index = 0;
 	while (index < simulation->config.number_of_coders)
 	{
+		pthread_mutex_lock(&simulation->dongles[index].mutex);
 		pthread_cond_broadcast(&simulation->dongles[index].cond);
+		pthread_mutex_unlock(&simulation->dongles[index].mutex);
 		index++;
 	}
 }
