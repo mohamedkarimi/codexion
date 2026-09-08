@@ -66,12 +66,14 @@ static void	*coder_routine(void *arg)
 			break ;
 		if (is_simulation_finished(coder->simulation))
 			break ;
-		if (!coder_needs_compile(coder))
-			break ;
 		coder_debug(coder);
 		if (is_simulation_finished(coder->simulation))
 			break ;
 		coder_refactor(coder);
+		pthread_mutex_lock(&coder->simulation->state_mutex);
+		if (!coder->simulation->finished)
+			coder->compile_count++;
+		pthread_mutex_unlock(&coder->simulation->state_mutex);
 	}
 	return (NULL);
 }
@@ -225,8 +227,6 @@ static int	coder_compile(t_coder *coder)
 	wait_for_duration(coder, coder->simulation->config.time_to_compile);
 	pthread_mutex_lock(&coder->simulation->state_mutex);
 	finished = coder->simulation->finished;
-	if (!finished)
-		coder->compile_count++;
 	pthread_mutex_unlock(&coder->simulation->state_mutex);
 	release_both_dongles(coder);
 	return (finished);
