@@ -1,4 +1,13 @@
+
 #include "codexion.h"
+
+static int	stop_coders(t_simulation *simulation)
+{
+	set_simulation_finished(simulation);
+	join_coder_threads(simulation);
+	cleanup_simulation(simulation);
+	return (1);
+}
 
 int	main(int argc, char **argv)
 {
@@ -12,19 +21,9 @@ int	main(int argc, char **argv)
 	if (init_simulation(&simulation) != 0)
 		return (1);
 	if (create_coder_threads(&simulation) != 0)
-	{
-		set_simulation_finished(&simulation);
-		join_coder_threads(&simulation);
-		cleanup_simulation(&simulation);
-		return (1);
-	}
+		return (stop_coders(&simulation));
 	if (create_monitor_thread(&simulation) != 0)
-	{
-		set_simulation_finished(&simulation);
-		join_coder_threads(&simulation);
-		cleanup_simulation(&simulation);
-		return (1);
-	}
+		return (stop_coders(&simulation));
 	if (join_coder_threads(&simulation) != 0
 		|| join_monitor_thread(&simulation) != 0)
 		return (1);
