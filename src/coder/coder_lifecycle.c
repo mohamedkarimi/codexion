@@ -4,29 +4,14 @@
 void	wait_for_duration(t_coder *coder, long duration)
 {
 	t_simulation		*simulation;
-	struct timeval		now;
-	struct timespec		deadline;
-	int					wait_status;
+	long				end;
 
 	simulation = coder->simulation;
-	gettimeofday(&now, NULL);
-	deadline.tv_sec = now.tv_sec + duration / 1000;
-	deadline.tv_nsec = now.tv_usec * 1000 + (duration % 1000) * 1000000;
-	if (deadline.tv_nsec >= 1000000000)
+	end = get_time_ms() + duration;
+	while (get_time_ms() < end && !is_simulation_finished(simulation))
 	{
-		deadline.tv_sec++;
-		deadline.tv_nsec -= 1000000000;
+		sleep_ms(1);
 	}
-	if (pthread_mutex_lock(&simulation->scheduler_mutex) != 0)
-		return ;
-	while (!is_simulation_finished(simulation))
-	{
-		wait_status = pthread_cond_timedwait(&simulation->scheduler_cond,
-				&simulation->scheduler_mutex, &deadline);
-		if (wait_status != 0)
-			break ;
-	}
-	pthread_mutex_unlock(&simulation->scheduler_mutex);
 }
 
 int	coder_compile(t_coder *coder)

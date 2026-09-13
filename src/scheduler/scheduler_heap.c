@@ -8,6 +8,8 @@ int	request_before(t_request *first, t_request *second)
 	simulation = first->coder->simulation;
 	if (strcmp(simulation->config.scheduler, "fifo") == 0)
 		return (first->arrival_order < second->arrival_order);
+	if (strcmp(simulation->config.scheduler, "lifo") == 0)
+		return (first->arrival_order > second->arrival_order);
 	if (first->deadline != second->deadline)
 		return (first->deadline < second->deadline);
 	return (first->arrival_order < second->arrival_order);
@@ -29,6 +31,7 @@ void	heap_push(t_heap *heap, t_request *request)
 	index = heap->size++;
 	heap->items[index] = request;
 	while (index > 0 && request_before(heap->items[index],
+		///calculates the parent index
 			heap->items[(index - 1) / 2]))
 	{
 		swap_requests(&heap->items[index], &heap->items[(index - 1) / 2]);

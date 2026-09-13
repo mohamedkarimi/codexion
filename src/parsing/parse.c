@@ -7,7 +7,7 @@ static int	valid_arguments(int argc, char **argv)
 		|| !is_number(argv[3]) || !is_number(argv[4]) || !is_number(argv[5])
 		|| !is_number(argv[6]) || !is_number(argv[7]))
 		return (0);
-	if (strcmp(argv[8], "fifo") != 0 && strcmp(argv[8], "edf") != 0)
+	if (strcmp(argv[8], "fifo") != 0 && strcmp(argv[8], "edf") != 0 && strcmp(argv[8], "lifo") != 0)
 		return (0);
 	return (1);
 }
